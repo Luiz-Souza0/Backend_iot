@@ -1,0 +1,45 @@
+{
+
+"espaco":{
+    "nome": "Casa do Marcelo",
+    "ambientes": [
+        { 
+            "nome": "quarto",
+            "temperatura": {"value": 22, "mac": "6543636SDKJAHG", "warning": "Normal"},
+            "energias": [
+                { "tipo": "tomada", "nome": "tomada cama", "status": "off" },
+                { "tipo": "tomada", "nome": "tomada computador", "status": "off" },
+                { "tipo": "tomada", "nome": "tomada televisao", "status": "off" },
+                { "tipo": "lampada", "nome": "lampada leitura", "status": "off" },
+                { "tipo": "lampada", "nome": "lampada geral", "status": "off" }
+
+            ]
+        },
+
+        { 
+            "nome": "cozinha",
+            "temperatura": {"value": 28, "mac": "654984894FFSHG", "warning": "Normal"},
+            "energias": [
+                { "tipo": "tomada", "nome": "tomada fogao", "status": "off" },
+                { "tipo": "tomada", "nome": "tomada geladeira", "status": "off" },
+                { "tipo": "tomada", "nome": "tomada pia", "status": "off" },
+                { "tipo": "lampada", "nome": "lampada geral", "status": "off" }
+            ]
+        },
+
+        { 
+            "nome": "sala",
+            "temperatura": {"value": 20, "mac": "6545358KJAHG", "warning": "Normal"},
+            "energias": [
+                { "tipo": "tomada", "nome": "tomada televisao", "status": "off" },
+                { "tipo": "tomada", "nome": "tomada sofa", "status": "off" },
+                { "tipo": "tomada", "nome": "tomada caixa de som", "status": "off" },
+                { "tipo": "lampada", "nome": "lampada ambiente", "status": "off" },
+                { "tipo": "lampada", "nome": "lampada geral", "status": "off" }
+            ]
+        }
+
+    ]
+}
+
+}
