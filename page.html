@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Simulação de Temperatura</h1>
+        <div class="temperature-info" id="temperatureInfo">
+        </div>
+    </div>
+
+
+
+
+    <script>
+  
+        async function fetchTemperature() {
+            try {
+                const response = await fetch('http://localhost:3001/temperature');
+                const data = await response.json();
+                document.getElementById('temperatureInfo').innerHTML = `
+                    <p>Cidade: ${data.city}</p>
+                    <p>Temperatura: ${data.temperature}</p>
+                    <p>SetPoint: ${data.Warning}</p>
+                `;
+            } catch (error) {
+                console.error('Erro:', error);
+                document.getElementById('temperatureInfo').innerHTML = 'Erro ao carregar a temperatura.';
+            }
+        }
+
+        
+        setInterval(fetchTemperature, 500);
+
+    </script>
+</body>
+</html>
