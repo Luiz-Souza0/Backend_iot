@@ -1,24 +1,69 @@
-const TemperatureRoutes = require('./Routes/TemperatureRoutes');
+const WebSocket = require('ws');
+const { getTemperatureData, updateTemperatureData } = require('./Routes/TemperatureRoutes'); 
+const lightRoutes = require('./Routes/LightsRoutes');
 
-const express = require('express');
-const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
-const app = express();
-const port = 3001;
-const cors = require("cors");
+const wss = new WebSocket.Server({ port: 8080 });
 
-app.use(cors({ origin: '*', credentials: false }));
+console.log('Servidor WebSocket rodando na porta 8080...');
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+wss.on('connection', (ws) => {
+  console.log('Novo cliente conectado.');
 
-//se precisar de um BD basicao - mongodb atlas
-//mongoose.connect('mongodb+srv://{user}:{password}@{cluster}.mehdhep.mongodb.net/?retryWrites=true&w=majority', { useNewUrlParser: true });
+  const temperatureData = getTemperatureData();
+  const energy = lightRoutes.getLightData();
 
+  ws.send(JSON.stringify({ type: 'temperatures', data: temperatureData }));
+  ws.send(JSON.stringify({ type: 'energy', data: energy }));
 
+  ws.on('message', (message) => {
+    try {
+      const parsedMessage = JSON.parse(message);
 
-app.use('/', TemperatureRoutes);
+      if (parsedMessage.type === 'updateTemperature') {
+        // nova temperatura do cliente e pra atualizar no arquivo JSON
+        const newTemperatureData = parsedMessage.data;
+        console.log('Atualizando temperatura para:', newTemperatureData);
+        updateTemperatureData(newTemperatureData);
 
-app.listen(port, () => {
-  console.log(`Servidor rodando na porta ${port}`);
+        // Envia para todos os clientes conectados
+        const updatedData = getTemperatureData();
+        wss.clients.forEach(client => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({ type: 'temperatures', data: updatedData }));
+          }
+        });
+      }
+
+      else if (parsedMessage.type === 'updateEnergyStatus') {
+        // Atualiza o status de energia
+        const { ambiente, nome, status } = parsedMessage.data;
+        const lights = lightRoutes.getLightData();
+        const updatedLights = lights.map((ambienteData) => {
+          if (ambienteData.nome === ambiente) {
+            ambienteData.energias = ambienteData.energias.map((energia) => {
+              if (energia.nome === nome) {
+                energia.status = status;
+              }
+              return energia;
+            });
+          }
+          return ambienteData;
+        });
+        lightRoutes.updateLightData(updatedLights);
+
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({ type: 'energy', data: updatedLights }));
+          }
+        });
+      }
+
+    } catch (error) {
+      console.error('Erro ao processar a mensagem:', error);
+    }
+  });
+
+  ws.on('close', () => {
+    console.log('Cliente desconectado.');
+  });
 });

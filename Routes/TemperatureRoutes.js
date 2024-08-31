@@ -1,62 +1,55 @@
-const express = require('express');
-const router = express.Router();
+const fs = require('fs');
+const path = require('path');
 
-const cidade = "rj";
-let temp = 32.85;  //valor inicial setado para fins de simulação
+const dbPath = path.join(__dirname, '../Bd.json');
+function getTemperatureData() {
+  try {
+    const data = fs.readFileSync(dbPath, 'utf8');
+    const jsonData = JSON.parse(data);
+    
+    // Mapeia os dados de temperatura de cada ambiente
+    const temperatures = jsonData.espaco.ambientes.map((ambiente) => ({
+      nome: ambiente.nome,
+      temperatura: ambiente.temperatura.value,
+      mac: ambiente.temperatura.mac,
+      warning: ambiente.temperatura.warning
+    }));
 
-
-
-function getRandomTemperature() {
-
-  const variation = (Math.random() * 4) - 2;
-  
-  return temp + variation;
+    return temperatures;
+  } catch (error) {
+    console.error('Erro ao ler o arquivo bd.json:', error);
+    return [];
+  }
 }
 
-
-
-let currentTemperature = getRandomTemperature();
-temp = currentTemperature;
-
-
-setInterval(() => {
-  currentTemperature = getRandomTemperature(temp);
-  console.log(`Nova temperatura gerada: ${currentTemperature.toFixed(2)}°C`);
-}, 1000); 
-
-router.get('/temperature', (req, res) => {
-
-  let warningMessage = "none";
-
-  if (currentTemperature < 20) {
-    warningMessage = "Aumente a temperatura";
-  } else if (currentTemperature > 32) {
-    warningMessage = "Abaixe a temperatura";
-  }
-
-    res.json({
-      city: cidade,
-      temperature: `${currentTemperature.toFixed(2)}°C`,
-      Warning: warningMessage
-    });
-
-});
-
-router.put('/temperature', async (req, res) => {
+function updateTemperatureData(updatedTemperatures) {
   try {
-    const newTemperature = req.body.temperature;
+    const data = fs.readFileSync(dbPath, 'utf8');
+    const jsonData = JSON.parse(data);
 
-    currentTemperature = newTemperature;
-    console.log(`Temperatura atualizada para: ${currentTemperature}°C`);
+    // Atualiza os dados de temperatura
+    jsonData.espaco.ambientes.forEach((ambiente) => {
+      const updated = updatedTemperatures.find(temp => temp.nome === ambiente.nome);
+      if (updated) {
 
-    res.json({
-      message: 'Temperatura atualizada com sucesso.',
-      newTemperature: `${currentTemperature.toFixed(2)}°C`
+        if(updated.temperatura<20){
+          ambiente.temperatura.warning = "Low";
+        }
+        else if(updated.temperatura>32){
+          ambiente.temperatura.warning = "High";
+        }
+        else{
+          ambiente.temperatura.warning = "Normal";
+        }
+
+        ambiente.temperatura.value = updated.temperatura;
+      }
     });
-  } catch (error) {
-    console.error('Erro:', error);
-    return res.status(500).json({ error: 'Erro ao atualizar a temperatura.' });
-  }
-});
 
-module.exports = router;
+    fs.writeFileSync(dbPath, JSON.stringify(jsonData, null, 2));
+  } catch (error) {
+    console.error('Erro ao atualizar o arquivo bd.json:', error);
+  }
+}
+
+module.exports = { getTemperatureData, updateTemperatureData };

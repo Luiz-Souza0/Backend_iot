@@ -1,41 +1,131 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cliente WebSocket - Temperatura e Energia</title>
+  <style>
+    body {
+      margin: 20px;
+    }
+    .temperature-list, .energy-list {
+      list-style-type: none;
+      padding: 0;
+    }
+    .temperature-item, .energy-item {
+      background-color: #f0f0f0;
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .energy-item button {
+      margin-left: 10px;
+    }
+  </style>
 </head>
-
 <body>
-    <div class="container">
-        <h1>Simulação de Temperatura</h1>
-        <div class="temperature-info" id="temperatureInfo">
-        </div>
-    </div>
+  <h1>Temperaturas Recebidas do Servidor WebSocket</h1>
+  <ul class="temperature-list" id="temperatureList"></ul>
 
+  <h1>Pontos de Energia</h1>
+  <ul class="energy-list" id="energyList"></ul>
 
+  <script>
+    const socket = new WebSocket('ws://localhost:8080');
 
+    socket.onopen = () => {
+      console.log('Conectado ao servidor WebSocket');
+    };
 
-    <script>
-  
-        async function fetchTemperature() {
-            try {
-                const response = await fetch('http://localhost:3001/temperature');
-                const data = await response.json();
-                document.getElementById('temperatureInfo').innerHTML = `
-                    <p>Cidade: ${data.city}</p>
-                    <p>Temperatura: ${data.temperature}</p>
-                    <p>SetPoint: ${data.Warning}</p>
-                `;
-            } catch (error) {
-                console.error('Erro:', error);
-                document.getElementById('temperatureInfo').innerHTML = 'Erro ao carregar a temperatura.';
-            }
-        }
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.type === 'temperatures') {
+        displayTemperatures(data.data);
+      } else if (data.type === 'energy') {
+        displayLights(data.data);
+      }
+    };
+
+    socket.onclose = () => {
+      console.log('Desconectado do servidor WebSocket');
+    };
+
+    function displayTemperatures(temperatures) {
+      const temperatureList = document.getElementById('temperatureList');
+      temperatureList.innerHTML = ''; 
+
+      temperatures.forEach((temp) => {
+        const listItem = document.createElement('li');
+        listItem.className = 'temperature-item';
+        listItem.textContent = `Ambiente: ${temp.nome}, Temperatura: ${temp.temperatura}°C, MAC: ${temp.mac}, Alerta: ${temp.warning}`;
+        temperatureList.appendChild(listItem);
+      });
+    }
+
+    function displayLights(lights) {
+      const energyList = document.getElementById('energyList');
+      energyList.innerHTML = ''; 
+
+      lights.forEach((ambiente) => {
+        ambiente.energias.forEach((energia) => {
+          const listItem = document.createElement('li');
+          listItem.className = 'energy-item';
+          listItem.textContent = `Ambiente: ${ambiente.nome}, Tipo: ${energia.tipo}, Nome: ${energia.nome}, Status: ${energia.status}`;
+          
+                  
+          const toggleButton = document.createElement('button');
+          toggleButton.textContent = energia.status === 'on' ? 'Desligar' : 'Ligar';
+          toggleButton.onclick = () => toggleEnergyStatus(ambiente.nome, energia.nome, energia.status);
+
+          listItem.appendChild(toggleButton);
+          energyList.appendChild(listItem);
+        });
+      });
+    }
+
+    function toggleEnergyStatus(ambienteNome, energiaNome, currentStatus) {
 
         
-        setInterval(fetchTemperature, 500);
+      const newStatus = currentStatus === 'on' ? 'off' : 'on';
 
-    </script>
+
+      socket.send(JSON.stringify({
+        type: 'updateEnergyStatus',
+        data: {
+          ambiente: ambienteNome,
+          nome: energiaNome,
+          status: newStatus
+        }
+      }));
+      console.log(`Novo status para ${ambienteNome} - ${energiaNome}: ${newStatus}`);
+    }
+
+    function updateTemperatureRandomly() {
+
+
+        const temperatureList = document.querySelectorAll('.temperature-item');
+
+      const updatedData = Array.from(temperatureList).map((item) => {
+        const ambienteNome = item.textContent.split(',')[0].split(':')[1].trim();
+        const newTemperature = Math.floor(Math.random() * 25) + 15; 
+
+        return {
+          nome: ambienteNome,
+          temperatura: newTemperature
+        };
+      });
+
+
+      socket.send(JSON.stringify({ type: 'updateTemperature', data: updatedData }));
+      console.log('Novas temperaturas enviadas:', updatedData);
+    }
+
+
+    setInterval(updateTemperatureRandomly, 5000);
+  </script>
 </body>
 </html>
