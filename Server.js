@@ -1,6 +1,7 @@
 const WebSocket = require('ws');
-const { getTemperatureData, updateTemperatureData } = require('./Routes/TemperatureRoutes'); 
+const { getTemperatureData, updateTemperatureData } = require('./Routes/TemperatureRoutes');
 const lightRoutes = require('./Routes/LightsRoutes');
+const { getTemperatureFromWeb } = require('./puppeteer');  // Import the updated function
 
 const wss = new WebSocket.Server({ port: 8080 });
 
@@ -66,4 +67,14 @@ wss.on('connection', (ws) => {
   ws.on('close', () => {
     console.log('Cliente desconectado.');
   });
+
+  // Fetch the temperature data from Puppeteer and send to clients
+  getTemperatureFromWeb().then((temperature) => {
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({ type: 'temp', data: temperature }));
+        }
+    });
+});
+
 });

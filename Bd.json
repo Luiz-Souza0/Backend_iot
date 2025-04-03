@@ -5,15 +5,15 @@
       {
         "nome": "quarto",
         "temperatura": {
-          "value": 34,
+          "value": 32,
           "mac": "6543636SDKJAHG",
-          "warning": "High"
+          "warning": "Normal"
         },
         "energias": [
           {
             "tipo": "tomada",
             "nome": "tomada cama",
-            "status": "on"
+            "status": "off"
           },
           {
             "tipo": "tomada",
@@ -40,9 +40,9 @@
       {
         "nome": "cozinha",
         "temperatura": {
-          "value": 37,
+          "value": 20,
           "mac": "654984894FFSHG",
-          "warning": "High"
+          "warning": "Normal"
         },
         "energias": [
           {
@@ -70,9 +70,9 @@
       {
         "nome": "sala",
         "temperatura": {
-          "value": 19,
+          "value": 27,
           "mac": "6545358KJAHG",
-          "warning": "Low"
+          "warning": "Normal"
         },
         "energias": [
           {

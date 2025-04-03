@@ -28,6 +28,7 @@
 </head>
 <body>
   <h1>Temperaturas Recebidas do Servidor WebSocket</h1>
+  <h1 class="temp-list" id="tempList">  aaaaaaaaaa  </h1>
   <ul class="temperature-list" id="temperatureList"></ul>
 
   <h1>Pontos de Energia</h1>
@@ -45,14 +46,23 @@
 
       if (data.type === 'temperatures') {
         displayTemperatures(data.data);
+
       } else if (data.type === 'energy') {
         displayLights(data.data);
+      }
+      else {
+        displaytemp(data.data);
       }
     };
 
     socket.onclose = () => {
       console.log('Desconectado do servidor WebSocket');
     };
+
+    function displaytemp(temp){
+      const temperatureList = document.getElementById('tempList');
+      temperatureList.innerHTML = temp; 
+    }
 
     function displayTemperatures(temperatures) {
       const temperatureList = document.getElementById('temperatureList');
